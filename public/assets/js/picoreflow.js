@@ -544,9 +544,20 @@ $(document).ready(function()
 
                     left = parseInt(x.totaltime-x.runtime);
                     eta = new Date(left * 1000).toISOString().substr(11, 8);
+                    
+                    slip = parseInt(x.actual_runtime - x.runtime)
+                    slippage = new Date(slip * 1000).toISOString().substr(11, 8);
+
+                    elapsed = new Date(parseInt(x.actual_runtime) * 1000).toISOString().substr(11, 8);
+                    start_time = new Date(parseInt(x.original_start_time) * 1000).toLocaleString();
+                    console.log(start_time)
 
                     updateProgress(parseFloat(x.runtime)/parseFloat(x.totaltime)*100);
+
                     $('#state').html('<span class="glyphicon glyphicon-time" style="font-size: 22px; font-weight: normal"></span><span style="font-family: Digi; font-size: 40px;">' + eta + '</span>');
+                    $('#elapsed_time').html(elapsed);
+                    $('#slippage').html(slippage);
+                    $('#start_time').html(start_time);
                     $('#target_temp').html(parseInt(x.target));
 
 

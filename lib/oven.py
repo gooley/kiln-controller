@@ -175,7 +175,9 @@ class Oven(threading.Thread):
         self.state = "IDLE"
         self.profile = None
         self.start_time = 0
+        self.original_start_time = datetime.datetime.now()
         self.runtime = 0
+        self.actual_runtime = 0
         self.totaltime = 0
         self.target = 0
         self.heat = 0
@@ -202,6 +204,7 @@ class Oven(threading.Thread):
         self.totaltime = profile.get_duration()
         self.state = "RUNNING"
         self.start_time = datetime.datetime.now()
+        self.original_start_time = datetime.datetime.now()
         self.startat = startat * 60
         log.info("Starting")
 
@@ -228,10 +231,16 @@ class Oven(threading.Thread):
         if runtime_delta.total_seconds() < 0:
             runtime_delta = datetime.timedelta(0)
 
+        actual_runtime_delta = datetime.datetime.now() - self.original_start_time
+        if actual_runtime_delta.total_seconds() < 0:
+            actual_runtime_delta = datetime.timedelta(0)
+
         if self.startat > 0:
             self.runtime = self.startat + runtime_delta.total_seconds()
+            self.actual_runtime = self.startat + actual_runtime_delta.total_seconds()
         else:
             self.runtime = runtime_delta.total_seconds()
+            self.actual_runtime = actual_runtime_delta.total_seconds()
 
     def update_target_temp(self):
         self.target = self.profile.get_target_temperature(self.runtime)
@@ -263,6 +272,8 @@ class Oven(threading.Thread):
     def get_state(self):
         state = {
             'runtime': self.runtime,
+            'actual_runtime': self.actual_runtime,
+            'original_start_time': self.original_start_time.timestamp(),
             'temperature': self.board.temp_sensor.temperature + config.thermocouple_offset,
             'target': self.target,
             'state': self.state,
@@ -407,13 +418,14 @@ class RealOven(Oven):
         if heat_off:
             self.output.cool(heat_off)
         time_left = self.totaltime - self.runtime
-        log.info("temp=%.2f, target=%.2f, pid=%.3f, heat_on=%.2f, heat_off=%.2f, run_time=%d, total_time=%d, time_left=%d" %
+        log.info("temp=%.2f, target=%.2f, pid=%.3f, heat_on=%.2f, heat_off=%.2f, run_time=%d, actual_run_time=%d, total_time=%d, time_left=%d" %
             (self.board.temp_sensor.temperature + config.thermocouple_offset,
              self.target,
              pid,
              heat_on,
              heat_off,
              self.runtime,
+             self.actual_runtime,
              self.totaltime,
              time_left))
 
